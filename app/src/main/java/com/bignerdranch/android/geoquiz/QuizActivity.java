@@ -1,5 +1,6 @@
 package com.bignerdranch.android.geoquiz;
 
+import android.app.Activity;
 import android.content.Intent;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -15,6 +16,7 @@ public class QuizActivity extends AppCompatActivity {
     //strings for logging
     private static final String TAG = "QuizActivity";
     private static final String KEY_INDEX = "index";
+    private static final int REQUEST_CODE_CHEAT = 0;
 
     //variables that are used in conjunction with the program/strings, and xml
     private Button mTrueButton;
@@ -35,6 +37,7 @@ public class QuizActivity extends AppCompatActivity {
 
     //counter that counts what array index you are at
     private int mCurrentIndex = 0;
+    private boolean mIsCheater;
 
     //method that updates the question based on the index in the array and sets the corresponding text
     private void updateQuestion() {
@@ -48,11 +51,17 @@ public class QuizActivity extends AppCompatActivity {
 
         int messageResId = 0;
 
-        if (userPressedTrue == answerIsTrue) {
-            messageResId = R.string.correct_toast;
+        if (mIsCheater) {
+            messageResId = R.string.judgment_toast;
         }
+
         else {
-            messageResId = R.string.incorrect_toast;
+
+            if (userPressedTrue == answerIsTrue) {
+                messageResId = R.string.correct_toast;
+            } else {
+                messageResId = R.string.incorrect_toast;
+            }
         }
 
         Toast.makeText(this, messageResId, Toast.LENGTH_SHORT).show();
@@ -111,7 +120,7 @@ public class QuizActivity extends AppCompatActivity {
                 //start CheatActivity
                 boolean answerIsTrue = mQuestionBank[mCurrentIndex].isAnswerTrue();
                 Intent i = CheatActivity.newIntent(QuizActivity.this, answerIsTrue);
-                startActivity(i);
+                startActivityForResult(i, REQUEST_CODE_CHEAT);
             }
 
         });
@@ -161,6 +170,7 @@ public class QuizActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 mCurrentIndex = (mCurrentIndex + 1) % mQuestionBank.length;
+                mIsCheater = false;
                 updateQuestion();
             }
         });
@@ -181,6 +191,21 @@ public class QuizActivity extends AppCompatActivity {
 
         //updates the question at the end of the oncreate method
         updateQuestion();
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if (resultCode != Activity.RESULT_OK) {
+            return;
+        }
+
+        if (requestCode == REQUEST_CODE_CHEAT) {
+            if (data == null) {
+                return;
+            }
+            mIsCheater = CheatActivity.wasAnswerShown(data);
+        }
+
     }
 
 }
